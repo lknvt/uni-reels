@@ -2,7 +2,7 @@ import React from 'react';
 import {interpolate, Sequence, spring, useCurrentFrame, useVideoConfig} from 'remotion';
 import {ACCENT, LIGHT, body} from './theme';
 
-type Phrase = {text: string; from: number; to: number};
+export type Phrase = {text: string; from: number; to: number};
 
 export const PHRASES: Phrase[] = [
   {text: 'Вашему бизнесу', from: 0, to: 45},
@@ -52,10 +52,10 @@ const Caption: React.FC<{phrase: Phrase}> = ({phrase}) => {
   );
 };
 
-export const Subtitles: React.FC = () => {
+export const Subtitles: React.FC<{phrases?: Phrase[]}> = ({phrases = PHRASES}) => {
   return (
     <div style={{position: 'absolute', left: 0, right: 0, bottom: 300, display: 'flex', justifyContent: 'center'}}>
-      {PHRASES.map((p) => (
+      {phrases.map((p) => (
         <Sequence key={p.from} from={p.from} durationInFrames={p.to - p.from} layout="none">
           <div style={{position: 'absolute', bottom: 0, left: 0, right: 0, display: 'flex', justifyContent: 'center'}}>
             <Caption phrase={p} />
