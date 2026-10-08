@@ -9,9 +9,9 @@ export const PROMO_DURATION = 20 * 30; // 600 кадров
 // Положите озвучку в public/voiceover.mp3 и поставьте true.
 const HAS_VOICE = false;
 
-const BLACK = '#000000';
-const CREAM = '#EDEBE6';
-const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
+export const BLACK = '#000000';
+export const CREAM = '#EDEBE6';
+export const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
 // Тайминги реплик (кадры @30fps) — подгоняются под реальную озвучку.
 const PHRASES: Phrase[] = [
@@ -26,15 +26,15 @@ const PHRASES: Phrase[] = [
   {text: 'UNI. Ваша идея. Наш код.', from: 510, to: 600},
 ];
 
-const outline = (w = 3): React.CSSProperties => ({color: 'transparent', WebkitTextStroke: `${w}px ${CREAM}`});
+export const outline = (w = 3): React.CSSProperties => ({color: 'transparent', WebkitTextStroke: `${w}px ${CREAM}`});
 
 // Метка UNI в углу, как на постах
-const Tag: React.FC = () => (
+export const Tag: React.FC = () => (
   <div style={{position: 'absolute', top: 120, left: 80, fontFamily: mono, fontWeight: 500, fontSize: 40, letterSpacing: 10, color: CREAM}}>UNI</div>
 );
 
 // Бегущая лента
-const Tape: React.FC<{text: string; top: number; rot: number; dir?: 1 | -1; inverted?: boolean; size?: number}> = ({text, top, rot, dir = 1, inverted = true, size = 84}) => {
+export const Tape: React.FC<{text: string; top: number; rot: number; dir?: 1 | -1; inverted?: boolean; size?: number}> = ({text, top, rot, dir = 1, inverted = true, size = 84}) => {
   const frame = useCurrentFrame();
   const unit = `${text}  ✦  `;
   const item = Array.from({length: 8}).map(() => unit).join('');
@@ -46,7 +46,7 @@ const Tape: React.FC<{text: string; top: number; rot: number; dir?: 1 | -1; inve
 };
 
 // Удар: слово влетает крупно и «садится»
-const Slam: React.FC<{children: string; from: number; fill?: boolean; size?: number}> = ({children, from, fill = true, size = 190}) => {
+export const Slam: React.FC<{children: string; from: number; fill?: boolean; size?: number}> = ({children, from, fill = true, size = 190}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const p = spring({frame: frame - from, fps, config: {damping: 11, stiffness: 300}, durationInFrames: 12});
@@ -59,7 +59,7 @@ const Slam: React.FC<{children: string; from: number; fill?: boolean; size?: num
 };
 
 // Затухающая тряска камеры от ударов
-const shake = (frame: number, hits: number[]) => {
+export const shake = (frame: number, hits: number[]) => {
   let x = 0;
   let y = 0;
   for (const h of hits) {
@@ -114,17 +114,17 @@ const Hook: React.FC = () => {
   );
 };
 
-type Site = {img: string; name: string; tag: string; scroll: number; chips: [string, string]};
-const SITES: Site[] = [
+export type Site = {img: string; name: string; tag: string; scroll: number; chips: [string, string]};
+export const SITES: Site[] = [
   {img: 'shots/archa.jpg', name: 'АРЧА', tag: 'Стрижка растений', scroll: 1100, chips: ['Тёмный премиум', 'Заявка в WhatsApp']},
   {img: 'shots/toefl.jpg', name: 'TOEFL', tag: 'Языковой центр', scroll: 1100, chips: ['Тест уровня', 'Запись в WhatsApp']},
   {img: 'shots/tirazh.jpg', name: 'TIRAZH', tag: 'Полиграфия и мерч', scroll: 1100, chips: ['Каталог работ', 'Расчёт тиража']},
 ];
 
-const PHONE_W = 600;
-const PHONE_H = 1190;
+export const PHONE_W = 600;
+export const PHONE_H = 1190;
 
-const Chip: React.FC<{text: string; delay: number; left?: number; right?: number; top: number}> = ({text, delay, left, right, top}) => {
+export const Chip: React.FC<{text: string; delay: number; left?: number; right?: number; top: number}> = ({text, delay, left, right, top}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const p = spring({frame: frame - delay, fps, config: {damping: 13, stiffness: 180}});
@@ -136,7 +136,7 @@ const Chip: React.FC<{text: string; delay: number; left?: number; right?: number
   );
 };
 
-const Showcase: React.FC<{site: Site; idx: number; dur: number}> = ({site, idx, dur}) => {
+export const Showcase: React.FC<{site: Site; idx: number; dur: number}> = ({site, idx, dur}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const inP = spring({frame, fps, config: {damping: 16, stiffness: 110}});
@@ -231,7 +231,7 @@ const Outro: React.FC = () => {
 };
 
 // Кремовая шторка на стыках сцен
-const Wipe: React.FC = () => {
+export const Wipe: React.FC = () => {
   const frame = useCurrentFrame();
   const x = interpolate(frame, [0, 14], [-100, 100], {...clamp, easing: Easing.inOut(Easing.cubic)});
   return <AbsoluteFill style={{background: CREAM, transform: `translateX(${x}%) skewX(-8deg)`}} />;

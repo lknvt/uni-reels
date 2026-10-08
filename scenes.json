@@ -1,0 +1,13 @@
+{
+  "name": "uni-mockups",
+  "voice": "George",
+  "character": "conversational",
+  "scenes": [
+    {"id": "scene1", "text": "Не платите за сайт, пока не увидели макет.", "duration": 3, "character": "dramatic"},
+    {"id": "scene2", "text": "Мы нарисуем его бесплатно. Два макета под ваш бизнес.", "duration": 3},
+    {"id": "scene3", "text": "Вот сайты, которые мы уже сделали. Каждый под свой бизнес.", "duration": 5.5},
+    {"id": "scene4", "text": "Подпишитесь на нас и напишите плюс в комментариях.", "duration": 5},
+    {"id": "scene5", "text": "Каждому. Бесплатно.", "duration": 2, "character": "dramatic"},
+    {"id": "scene6", "text": "Юни. Ваша идея. Наш код.", "duration": 1.5}
+  ]
+}
