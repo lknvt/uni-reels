@@ -16,7 +16,7 @@ export const PHRASES: Phrase[] = [
   {text: 'Пишите нам в WhatsApp', from: 405, to: 450},
 ];
 
-const Caption: React.FC<{phrase: Phrase}> = ({phrase}) => {
+const Caption: React.FC<{phrase: Phrase; mono?: boolean}> = ({phrase, mono}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const words = phrase.text.split(' ');
@@ -29,7 +29,7 @@ const Caption: React.FC<{phrase: Phrase}> = ({phrase}) => {
       style={{
         transform: `translateY(${(1 - pop) * 30}px) scale(${0.92 + pop * 0.08})`,
         opacity: Math.min(pop, 1) * fadeOut,
-        background: 'rgba(18,20,25,0.92)',
+        background: mono ? '#000' : 'rgba(18,20,25,0.92)',
         border: '2px solid rgba(237,235,230,0.18)',
         borderRadius: 28,
         padding: '22px 38px',
@@ -43,7 +43,7 @@ const Caption: React.FC<{phrase: Phrase}> = ({phrase}) => {
       }}
     >
       {words.map((w, i) => (
-        <span key={i} style={{color: i === active ? ACCENT : LIGHT}}>
+        <span key={i} style={mono ? {background: i === active ? LIGHT : 'transparent', color: i === active ? '#000' : LIGHT, padding: '0 10px', borderRadius: 10} : {color: i === active ? ACCENT : LIGHT}}>
           {w}
           {i < words.length - 1 ? ' ' : ''}
         </span>
@@ -52,13 +52,13 @@ const Caption: React.FC<{phrase: Phrase}> = ({phrase}) => {
   );
 };
 
-export const Subtitles: React.FC<{phrases?: Phrase[]}> = ({phrases = PHRASES}) => {
+export const Subtitles: React.FC<{phrases?: Phrase[]; mono?: boolean}> = ({phrases = PHRASES, mono}) => {
   return (
     <div style={{position: 'absolute', left: 0, right: 0, bottom: 300, display: 'flex', justifyContent: 'center'}}>
       {phrases.map((p) => (
         <Sequence key={p.from} from={p.from} durationInFrames={p.to - p.from} layout="none">
           <div style={{position: 'absolute', bottom: 0, left: 0, right: 0, display: 'flex', justifyContent: 'center'}}>
-            <Caption phrase={p} />
+            <Caption phrase={p} mono={mono} />
           </div>
         </Sequence>
       ))}

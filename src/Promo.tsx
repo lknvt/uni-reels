@@ -1,6 +1,6 @@
 import React from 'react';
 import {AbsoluteFill, Audio, Easing, Img, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
-import {ACCENT, DARK, LIGHT, body, headline} from './theme';
+import {body, headline} from './theme';
 import {Logo} from './Logo';
 import {Phrase, Subtitles} from './Subtitles';
 
@@ -9,6 +9,8 @@ export const PROMO_DURATION = 20 * 30; // 600 кадров
 // Положите озвучку в public/voiceover.mp3 и поставьте true.
 const HAS_VOICE = false;
 
+const BLACK = '#000000';
+const CREAM = '#EDEBE6';
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
 // Тайминги реплик (кадры @30fps) — подгоняются под реальную озвучку.
@@ -24,90 +26,149 @@ const PHRASES: Phrase[] = [
   {text: 'UNI. Ваша идея. Наш код.', from: 510, to: 600},
 ];
 
-const Slam: React.FC<{children: string; from: number; color?: string; size?: number}> = ({children, from, color = LIGHT, size = 185}) => {
+const outline = (w = 3): React.CSSProperties => ({color: 'transparent', WebkitTextStroke: `${w}px ${CREAM}`});
+
+// Метка UNI в углу, как на постах
+const Tag: React.FC = () => (
+  <div style={{position: 'absolute', top: 120, left: 80, fontFamily: headline, fontWeight: 700, fontSize: 44, letterSpacing: 6, color: CREAM}}>UNI</div>
+);
+
+// Бегущая лента
+const Tape: React.FC<{text: string; top: number; rot: number; dir?: 1 | -1; inverted?: boolean; size?: number}> = ({text, top, rot, dir = 1, inverted = true, size = 84}) => {
+  const frame = useCurrentFrame();
+  const unit = `${text}  ✦  `;
+  const item = Array.from({length: 8}).map(() => unit).join('');
+  return (
+    <div style={{position: 'absolute', left: -200, width: 1500, top, transform: `rotate(${rot}deg)`, background: inverted ? CREAM : BLACK, borderBlock: inverted ? 'none' : `3px solid ${CREAM}`, overflow: 'hidden', padding: '14px 0'}}>
+      <div style={{fontFamily: headline, fontWeight: 700, fontSize: size, textTransform: 'uppercase', whiteSpace: 'nowrap', color: inverted ? BLACK : CREAM, transform: `translateX(${-300 + dir * ((frame * 14) % 1400) * -1}px)`}}>{item}</div>
+    </div>
+  );
+};
+
+// Удар: слово влетает крупно и «садится»
+const Slam: React.FC<{children: string; from: number; fill?: boolean; size?: number}> = ({children, from, fill = true, size = 190}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const p = spring({frame: frame - from, fps, config: {damping: 12, stiffness: 260}, durationInFrames: 12});
-  if (frame < from) return null;
+  const p = spring({frame: frame - from, fps, config: {damping: 11, stiffness: 300}, durationInFrames: 12});
+  if (frame < from) return <div style={{height: size * 0.95}} />;
   return (
-    <div style={{fontFamily: headline, fontWeight: 700, fontSize: size, lineHeight: 0.95, color, textTransform: 'uppercase', whiteSpace: 'nowrap', transform: `scale(${1.5 - 0.5 * p})`, opacity: Math.min(1, p * 3), transformOrigin: 'left center'}}>
+    <div style={{fontFamily: headline, fontWeight: 700, fontSize: size, lineHeight: 0.95, whiteSpace: 'nowrap', textTransform: 'uppercase', transform: `scale(${1.6 - 0.6 * p})`, opacity: Math.min(1, p * 3), transformOrigin: 'left center', ...(fill ? {color: CREAM} : outline(4))}}>
       {children}
     </div>
   );
 };
 
-// Хук: клиенты «уходят» с сайта
+// Затухающая тряска камеры от ударов
+const shake = (frame: number, hits: number[]) => {
+  let x = 0;
+  let y = 0;
+  for (const h of hits) {
+    const d = frame - h;
+    if (d >= 0 && d < 14) {
+      const a = Math.exp(-d / 3.5) * 22;
+      x += Math.sin(d * 5.3) * a;
+      y += Math.cos(d * 6.1) * a;
+    }
+  }
+  return `translate(${x}px, ${y}px)`;
+};
+
 const Hook: React.FC = () => {
   const frame = useCurrentFrame();
-  const flash = interpolate(frame, [55, 58, 66], [0, 0.35, 0], clamp);
+  const zoom = 1 + frame * 0.0012;
+  const flash = interpolate(frame, [55, 57, 68], [0, 0.9, 0], clamp);
   return (
-    <AbsoluteFill style={{background: DARK}}>
-      <div style={{position: 'absolute', top: 300, left: 80}}>
-        <Slam from={0}>Ваш сайт</Slam>
-        <Slam from={12} color={ACCENT}>теряет</Slam>
-        <Slam from={24} color={ACCENT}>клиентов</Slam>
-      </div>
-      <div style={{position: 'absolute', top: 960, left: 80, right: 80, display: 'flex', flexWrap: 'wrap', gap: 28}}>
-        {Array.from({length: 12}).map((_, i) => {
-          const leave = interpolate(frame, [40 + i * 3, 64 + i * 3], [0, 1], {...clamp, easing: Easing.in(Easing.cubic)});
-          return (
-            <svg key={i} width={110} height={130} viewBox="0 0 110 130" style={{opacity: 1 - leave, transform: `translate(${leave * (i % 2 ? 140 : -140)}px, ${-leave * 90}px)`}}>
-              <circle cx={55} cy={34} r={24} fill={LIGHT} />
-              <path d="M10 125 C10 80 100 80 100 125 Z" fill={LIGHT} />
-            </svg>
-          );
-        })}
-      </div>
-      <div style={{position: 'absolute', top: 1270, left: 80, whiteSpace: 'nowrap', fontFamily: headline, fontWeight: 700, fontSize: 135, color: LIGHT, textTransform: 'uppercase', opacity: interpolate(frame, [58, 64], [0, 1], clamp)}}>
-        каждый день.
-      </div>
-      <AbsoluteFill style={{background: '#fff', opacity: flash}} />
+    <AbsoluteFill style={{background: BLACK}}>
+      <AbsoluteFill style={{transform: `${shake(frame, [0, 12, 24, 56])} scale(${zoom})`}}>
+        <div style={{position: 'absolute', left: -560, top: 560, opacity: 0.1}}>
+          <Logo color={CREAM} width={2000} delay={0} />
+        </div>
+        <Tag />
+        <div style={{position: 'absolute', top: 280, left: 80}}>
+          <Slam from={0}>Ваш сайт</Slam>
+          <Slam from={12} fill={false}>теряет</Slam>
+          <Slam from={24}>клиентов</Slam>
+        </div>
+        <div style={{position: 'absolute', top: 920, left: 80, right: 80, display: 'flex', flexWrap: 'wrap', gap: 28}}>
+          {Array.from({length: 12}).map((_, i) => {
+            const leave = interpolate(frame, [38 + i * 3, 62 + i * 3], [0, 1], {...clamp, easing: Easing.in(Easing.cubic)});
+            const appear = interpolate(frame, [30 + i * 1.5, 38 + i * 1.5], [0, 1], clamp);
+            return (
+              <svg key={i} width={110} height={130} viewBox="0 0 110 130" style={{opacity: appear * (1 - leave), transform: `translate(${leave * (i % 2 ? 200 : -200)}px, ${-leave * 120}px) rotate(${leave * (i % 2 ? 40 : -40)}deg)`}}>
+                <circle cx={55} cy={34} r={24} fill={CREAM} />
+                <path d="M10 125 C10 80 100 80 100 125 Z" fill={CREAM} />
+              </svg>
+            );
+          })}
+        </div>
+        <div style={{position: 'absolute', top: 1230, left: 80}}>
+          <Slam from={56} size={118}>каждый день.</Slam>
+        </div>
+        <Tape text="теряет клиентов" top={1010} rot={-5} dir={-1} />
+      </AbsoluteFill>
+      <AbsoluteFill style={{background: CREAM, opacity: flash}} />
     </AbsoluteFill>
   );
 };
 
-type Site = {img: string; name: string; tag: string; bg: string; fg: string; scroll: number; imgH: number};
+type Site = {img: string; name: string; tag: string; scroll: number; chips: [string, string]};
 const SITES: Site[] = [
-  {img: 'shots/archa.jpg', name: 'АРЧА', tag: 'Стрижка растений', bg: '#050806', fg: LIGHT, scroll: 1100, imgH: 2600},
-  {img: 'shots/toefl.jpg', name: 'TOEFL Center', tag: 'Языковой центр', bg: '#eef1f7', fg: '#0b1638', scroll: 1100, imgH: 2600},
-  {img: 'shots/tirazh.jpg', name: 'TIRAZH', tag: 'Полиграфия и мерч', bg: '#EDEBE6', fg: '#0b1638', scroll: 1100, imgH: 2600},
+  {img: 'shots/archa.jpg', name: 'АРЧА', tag: 'Стрижка растений', scroll: 1100, chips: ['Тёмный премиум', 'Заявка в WhatsApp']},
+  {img: 'shots/toefl.jpg', name: 'TOEFL', tag: 'Языковой центр', scroll: 1100, chips: ['Тест уровня', 'Запись в WhatsApp']},
+  {img: 'shots/tirazh.jpg', name: 'TIRAZH', tag: 'Полиграфия и мерч', scroll: 1100, chips: ['Каталог работ', 'Расчёт тиража']},
 ];
 
 const PHONE_W = 600;
 const PHONE_H = 1190;
 
+const Chip: React.FC<{text: string; delay: number; left?: number; right?: number; top: number}> = ({text, delay, left, right, top}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const p = spring({frame: frame - delay, fps, config: {damping: 13, stiffness: 180}});
+  const float = Math.sin((frame + delay) / 9) * 8;
+  return (
+    <div style={{position: 'absolute', top: top + float, left, right, transform: `scale(${p})`, background: CREAM, color: BLACK, fontFamily: body, fontWeight: 800, fontSize: 38, padding: '18px 30px', borderRadius: 60, whiteSpace: 'nowrap'}}>
+      {text}
+    </div>
+  );
+};
+
 const Showcase: React.FC<{site: Site; idx: number; dur: number}> = ({site, idx, dur}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const inP = spring({frame, fps, config: {damping: 18, stiffness: 120}});
-  const outP = interpolate(frame, [dur - 10, dur], [0, 1], {...clamp, easing: Easing.in(Easing.cubic)});
-  const scroll = interpolate(frame, [8, dur - 8], [0, site.scroll], {...clamp, easing: Easing.inOut(Easing.quad)});
+  const inP = spring({frame, fps, config: {damping: 16, stiffness: 110}});
+  const scroll = interpolate(frame, [6, dur - 4], [0, site.scroll], {...clamp, easing: Easing.inOut(Easing.quad)});
+  const dirSign = idx % 2 ? -1 : 1;
+  const rotY = (1 - inP) * 55 * dirSign + Math.sin(frame / 20) * 3 * dirSign;
+  const rotX = (1 - inP) * 14;
+  const scale = 0.7 + inP * 0.3 + frame * 0.0012;
+  const bgX = interpolate(frame, [0, dur], [dirSign * 40, dirSign * -260]);
   return (
-    <AbsoluteFill style={{background: site.bg, transform: `translateX(${-outP * 100}%)`}}>
-      <div style={{position: 'absolute', top: 130, left: 80, fontFamily: headline, fontWeight: 700, fontSize: 44, letterSpacing: 6, color: site.fg}}>
-        0{idx + 1} / 03
+    <AbsoluteFill style={{background: BLACK}}>
+      <Tag />
+      <div style={{position: 'absolute', top: 120, right: 80, fontFamily: headline, fontWeight: 700, fontSize: 44, letterSpacing: 6, color: CREAM}}>0{idx + 1} / 03</div>
+      <div style={{position: 'absolute', top: 600, left: 0, fontFamily: headline, fontWeight: 700, fontSize: 520, lineHeight: 1, whiteSpace: 'nowrap', textTransform: 'uppercase', transform: `translateX(${bgX}px)`, opacity: 0.55, ...outline(3)}}>
+        {site.name}
       </div>
-      <div style={{position: 'absolute', top: 120, right: 80, textAlign: 'right', color: site.fg}}>
-        <div style={{fontFamily: headline, fontWeight: 700, fontSize: 56, textTransform: 'uppercase'}}>{site.name}</div>
-        <div style={{fontFamily: body, fontWeight: 600, fontSize: 28, opacity: 0.7}}>{site.tag}</div>
+      <div style={{position: 'absolute', left: (1080 - PHONE_W) / 2, top: 250, width: PHONE_W, height: PHONE_H, perspective: 1800}}>
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            borderRadius: 78,
+            background: '#0b0c10',
+            border: `8px solid ${CREAM}`,
+            overflow: 'hidden',
+            boxShadow: `0 0 0 2px ${BLACK}, 0 60px 120px rgba(237,235,230,0.12)`,
+            transform: `rotateY(${rotY}deg) rotateX(${rotX}deg) scale(${scale})`,
+          }}
+        >
+          <Img src={staticFile(site.img)} style={{width: PHONE_W - 16, position: 'absolute', left: 0, top: -scroll}} />
+        </div>
       </div>
-      <div
-        style={{
-          position: 'absolute',
-          left: (1080 - PHONE_W) / 2,
-          top: 250,
-          width: PHONE_W,
-          height: PHONE_H,
-          borderRadius: 78,
-          background: '#0b0c10',
-          border: '10px solid #1b1d24',
-          boxShadow: '0 50px 90px rgba(0,0,0,0.45)',
-          overflow: 'hidden',
-          transform: `translateY(${(1 - inP) * 900}px) rotate(${(1 - inP) * 6}deg)`,
-        }}
-      >
-        <Img src={staticFile(site.img)} style={{width: PHONE_W - 20, position: 'absolute', left: 0, top: -scroll}} />
-      </div>
+      <Chip text={site.chips[0]} delay={16} left={30} top={560} />
+      <Chip text={site.chips[1]} delay={26} right={30} top={1180} />
+      <div style={{position: 'absolute', top: 1450, left: 0, right: 0, textAlign: 'center', fontFamily: body, fontWeight: 600, fontSize: 30, color: CREAM, opacity: 0.6, letterSpacing: 4, textTransform: 'uppercase'}}>{site.name} · {site.tag}</div>
     </AbsoluteFill>
   );
 };
@@ -115,25 +176,33 @@ const Showcase: React.FC<{site: Site; idx: number; dur: number}> = ({site, idx, 
 const Offer: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const pulse = 1 + Math.sin(frame / 5) * 0.025;
+  const block = spring({frame: frame - 2, fps, config: {damping: 12, stiffness: 220}});
+  const pulse = 1 + Math.sin(frame / 4) * 0.015;
   const card = (n: string, text: string, delay: number) => {
-    const p = spring({frame: frame - delay, fps, config: {damping: 16, stiffness: 140}});
+    const p = spring({frame: frame - delay, fps, config: {damping: 15, stiffness: 150}});
     return (
-      <div key={n} style={{display: 'flex', alignItems: 'center', gap: 36, transform: `translateX(${(1 - p) * 900}px)`, background: '#1d2027', border: '2px solid rgba(237,235,230,0.2)', borderRadius: 36, padding: '34px 40px'}}>
-        <div style={{fontFamily: headline, fontWeight: 700, fontSize: 110, color: ACCENT, lineHeight: 1}}>{n}</div>
-        <div style={{fontFamily: body, fontWeight: 800, fontSize: 52, color: LIGHT, lineHeight: 1.15}}>{text}</div>
+      <div key={n} style={{display: 'flex', alignItems: 'center', gap: 36, transform: `translateX(${(1 - p) * 1000}px)`, border: `4px solid ${CREAM}`, borderRadius: 24, padding: '30px 40px'}}>
+        <div style={{fontFamily: headline, fontWeight: 700, fontSize: 120, color: CREAM, lineHeight: 1}}>{n}</div>
+        <div style={{fontFamily: body, fontWeight: 800, fontSize: 52, color: CREAM, lineHeight: 1.15}}>{text}</div>
       </div>
     );
   };
+  const draw = interpolate(frame, [30, 60], [0, 1], {...clamp, easing: Easing.out(Easing.cubic)});
   return (
-    <AbsoluteFill style={{background: DARK}}>
-      <div style={{position: 'absolute', top: 240, left: 80, right: 80}}>
-        <div style={{transform: `scale(${pulse})`, transformOrigin: 'left center', fontFamily: headline, fontWeight: 700, fontSize: 175, whiteSpace: 'nowrap', color: ACCENT, textTransform: 'uppercase', lineHeight: 0.95}}>бесплатно</div>
-        <div style={{fontFamily: headline, fontWeight: 700, fontSize: 108, whiteSpace: 'nowrap', color: LIGHT, textTransform: 'uppercase', lineHeight: 1, marginTop: 20}}>дизайн-макет<br />вашего сайта</div>
+    <AbsoluteFill style={{background: BLACK}}>
+      <Tag />
+      <Tape text="бесплатный дизайн-макет" top={1290} rot={0} size={72} inverted={false} />
+      <div style={{position: 'absolute', top: 230, left: 80, right: 80, transform: `scale(${pulse})`, transformOrigin: 'left top'}}>
+        <div style={{display: 'inline-block', background: CREAM, color: BLACK, fontFamily: headline, fontWeight: 700, fontSize: 160, lineHeight: 1, padding: '10px 36px 0', textTransform: 'uppercase', transform: `scaleX(${block})`, transformOrigin: 'left'}}>бесплатно</div>
+        <div style={{fontFamily: headline, fontWeight: 700, fontSize: 118, color: CREAM, textTransform: 'uppercase', lineHeight: 1, marginTop: 30, whiteSpace: 'nowrap'}}>дизайн-макет</div>
+        <div style={{fontFamily: headline, fontWeight: 700, fontSize: 118, textTransform: 'uppercase', lineHeight: 1, whiteSpace: 'nowrap', ...outline(3)}}>вашего сайта</div>
       </div>
-      <div style={{position: 'absolute', top: 880, left: 80, right: 80, display: 'flex', flexDirection: 'column', gap: 28}}>
-        {card('1', 'Подпишись на @uni___web', 6)}
-        {card('2', 'Напиши «+» в комментариях', 20)}
+      <svg style={{position: 'absolute', left: 80, top: 700}} width={920} height={120} viewBox="0 0 920 120">
+        <path d="M0 60 H860 M820 20 L880 60 L820 100" fill="none" stroke={CREAM} strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={1100} strokeDashoffset={1100 * (1 - draw)} />
+      </svg>
+      <div style={{position: 'absolute', top: 860, left: 80, right: 80, display: 'flex', flexDirection: 'column', gap: 28}}>
+        {card('1', 'Подпишись на @uni___web', 18)}
+        {card('2', 'Напиши «+» в комментариях', 34)}
       </div>
     </AbsoluteFill>
   );
@@ -142,31 +211,43 @@ const Offer: React.FC = () => {
 const Outro: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const p = spring({frame: frame - 30, fps, config: {damping: 200}});
+  const p = spring({frame: frame - 26, fps, config: {damping: 200}});
+  const zoom = 1 + frame * 0.0015;
   return (
-    <AbsoluteFill style={{background: DARK}}>
-      <div style={{position: 'absolute', top: 420, left: 0, right: 0, display: 'flex', justifyContent: 'center'}}>
-        <Logo color={LIGHT} width={640} delay={4} />
+    <AbsoluteFill style={{background: BLACK}}>
+      <div style={{position: 'absolute', top: 360, left: 0, right: 0, display: 'flex', justifyContent: 'center', transform: `scale(${zoom})`}}>
+        <Logo color={CREAM} width={760} delay={2} />
       </div>
-      <div style={{position: 'absolute', top: 900, left: 0, right: 0, textAlign: 'center', color: LIGHT, fontFamily: body, opacity: p, transform: `translateY(${(1 - p) * 30}px)`}}>
-        <div style={{fontFamily: headline, fontWeight: 700, fontSize: 120, whiteSpace: 'nowrap', textTransform: 'uppercase'}}>Сайты под ключ</div>
-        <div style={{fontSize: 56, fontWeight: 800, marginTop: 20, color: ACCENT}}>@uni___web</div>
+      <div style={{position: 'absolute', top: 930, left: 0, right: 0, textAlign: 'center', color: CREAM, opacity: p, transform: `translateY(${(1 - p) * 40}px)`}}>
+        <div style={{fontFamily: headline, fontWeight: 700, fontSize: 130, textTransform: 'uppercase', whiteSpace: 'nowrap'}}>Ваша идея.</div>
+        <div style={{fontFamily: headline, fontWeight: 700, fontSize: 130, textTransform: 'uppercase', whiteSpace: 'nowrap', ...outline(3)}}>Наш код.</div>
+        <div style={{fontFamily: body, fontSize: 52, fontWeight: 800, marginTop: 28, opacity: 0.85}}>@uni___web</div>
       </div>
     </AbsoluteFill>
   );
 };
 
+// Кремовая шторка на стыках сцен
+const Wipe: React.FC = () => {
+  const frame = useCurrentFrame();
+  const x = interpolate(frame, [0, 14], [-100, 100], {...clamp, easing: Easing.inOut(Easing.cubic)});
+  return <AbsoluteFill style={{background: CREAM, transform: `translateX(${x}%) skewX(-8deg)`}} />;
+};
+
 export const Promo: React.FC = () => (
-  <AbsoluteFill style={{background: DARK}}>
+  <AbsoluteFill style={{background: BLACK}}>
     {HAS_VOICE ? <Audio src={staticFile('voiceover.mp3')} /> : null}
     <Sequence from={0} durationInFrames={90}><Hook /></Sequence>
     {SITES.map((s, i) => (
-      <Sequence key={s.name} from={90 + i * 65} durationInFrames={i === 2 ? 65 : 75}>
-        <Showcase site={s} idx={i} dur={i === 2 ? 65 : 75} />
+      <Sequence key={s.name} from={90 + i * 65} durationInFrames={65}>
+        <Showcase site={s} idx={i} dur={65} />
       </Sequence>
     ))}
     <Sequence from={285} durationInFrames={225}><Offer /></Sequence>
     <Sequence from={510} durationInFrames={90}><Outro /></Sequence>
-    <Subtitles phrases={PHRASES} />
+    {[90, 155, 220, 285, 510].map((b) => (
+      <Sequence key={b} from={b - 7} durationInFrames={14}><Wipe /></Sequence>
+    ))}
+    <Subtitles phrases={PHRASES} mono />
   </AbsoluteFill>
 );
