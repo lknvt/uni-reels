@@ -1,6 +1,6 @@
 import React from 'react';
-import {interpolate, Sequence, spring, useCurrentFrame, useVideoConfig} from 'remotion';
-import {ACCENT, LIGHT, body} from './theme';
+import {AbsoluteFill, interpolate, Sequence, spring, useCurrentFrame, useVideoConfig} from 'remotion';
+import {ACCENT, LIGHT, body, headline} from './theme';
 
 export type Phrase = {text: string; from: number; to: number};
 
@@ -63,5 +63,52 @@ export const Subtitles: React.FC<{phrases?: Phrase[]; mono?: boolean}> = ({phras
         </Sequence>
       ))}
     </div>
+  );
+};
+
+// Слово за словом по центру экрана: кремовая плашка, чёрный узкий шрифт
+export const WordSubtitles: React.FC<{phrases: Phrase[]}> = ({phrases}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const words: {text: string; from: number; to: number; phraseEnd: number}[] = [];
+  for (const ph of phrases) {
+    const ws = ph.text.split(' ').filter(Boolean);
+    const weights = ws.map((w) => w.replace(/[.,!?«»]/g, '').length + 2);
+    const total = weights.reduce((a, b) => a + b, 0);
+    let t = ph.from;
+    ws.forEach((w, i) => {
+      const len = ((ph.to - ph.from) * weights[i]) / total;
+      words.push({text: w, from: Math.round(t), to: Math.round(t + len), phraseEnd: ph.to});
+      t += len;
+    });
+  }
+  const idx = words.findIndex((w) => frame >= w.from && frame < w.to);
+  const w = words[idx];
+  if (!w) return null;
+  const local = frame - w.from;
+  const pop = spring({frame: local, fps, config: {damping: 11, stiffness: 320}, durationInFrames: 10});
+  const tilt = idx % 2 ? 2.5 : -2.5;
+  const clean = w.text.replace(/[.,«»]/g, '').toUpperCase();
+  const size = clean.length > 11 ? 120 : clean.length > 8 ? 150 : 185;
+  return (
+    <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center', pointerEvents: 'none'}}>
+      <div
+        style={{
+          background: LIGHT,
+          color: '#000',
+          fontFamily: headline,
+          fontWeight: 700,
+          fontSize: size,
+          lineHeight: 1,
+          padding: '14px 40px 6px',
+          whiteSpace: 'nowrap',
+          transform: `rotate(${tilt}deg) scale(${0.55 + 0.45 * pop})`,
+          opacity: Math.min(1, pop * 2.5),
+          boxShadow: '0 0 0 6px #000',
+        }}
+      >
+        {clean}
+      </div>
+    </AbsoluteFill>
   );
 };

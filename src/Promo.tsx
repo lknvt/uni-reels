@@ -1,8 +1,8 @@
 import React from 'react';
 import {AbsoluteFill, Audio, Easing, Img, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
-import {body, headline} from './theme';
+import {body, headline, mono} from './theme';
 import {Logo} from './Logo';
-import {Phrase, Subtitles} from './Subtitles';
+import {Phrase, WordSubtitles} from './Subtitles';
 
 export const PROMO_DURATION = 20 * 30; // 600 кадров
 
@@ -30,7 +30,7 @@ const outline = (w = 3): React.CSSProperties => ({color: 'transparent', WebkitTe
 
 // Метка UNI в углу, как на постах
 const Tag: React.FC = () => (
-  <div style={{position: 'absolute', top: 120, left: 80, fontFamily: headline, fontWeight: 700, fontSize: 44, letterSpacing: 6, color: CREAM}}>UNI</div>
+  <div style={{position: 'absolute', top: 120, left: 80, fontFamily: mono, fontWeight: 500, fontSize: 40, letterSpacing: 10, color: CREAM}}>UNI</div>
 );
 
 // Бегущая лента
@@ -104,6 +104,9 @@ const Hook: React.FC = () => {
         <div style={{position: 'absolute', top: 1230, left: 80}}>
           <Slam from={56} size={118}>каждый день.</Slam>
         </div>
+        <div style={{position: 'absolute', top: 1120, left: 80, fontFamily: mono, fontWeight: 500, fontSize: 34, letterSpacing: 4, color: CREAM, opacity: interpolate(frame, [36, 42], [0, 0.8], clamp)}}>
+          КЛИЕНТОВ УШЛО: {String(Math.min(12, Math.max(0, Math.floor((frame - 38) / 3)))).padStart(2, '0')}
+        </div>
         <Tape text="теряет клиентов" top={1010} rot={-5} dir={-1} />
       </AbsoluteFill>
       <AbsoluteFill style={{background: CREAM, opacity: flash}} />
@@ -146,7 +149,7 @@ const Showcase: React.FC<{site: Site; idx: number; dur: number}> = ({site, idx, 
   return (
     <AbsoluteFill style={{background: BLACK}}>
       <Tag />
-      <div style={{position: 'absolute', top: 120, right: 80, fontFamily: headline, fontWeight: 700, fontSize: 44, letterSpacing: 6, color: CREAM}}>0{idx + 1} / 03</div>
+      <div style={{position: 'absolute', top: 120, right: 80, fontFamily: mono, fontWeight: 500, fontSize: 36, letterSpacing: 6, color: CREAM}}>0{idx + 1} / 03</div>
       <div style={{position: 'absolute', top: 600, left: 0, fontFamily: headline, fontWeight: 700, fontSize: 520, lineHeight: 1, whiteSpace: 'nowrap', textTransform: 'uppercase', transform: `translateX(${bgX}px)`, opacity: 0.55, ...outline(3)}}>
         {site.name}
       </div>
@@ -168,7 +171,7 @@ const Showcase: React.FC<{site: Site; idx: number; dur: number}> = ({site, idx, 
       </div>
       <Chip text={site.chips[0]} delay={16} left={30} top={560} />
       <Chip text={site.chips[1]} delay={26} right={30} top={1180} />
-      <div style={{position: 'absolute', top: 1450, left: 0, right: 0, textAlign: 'center', fontFamily: body, fontWeight: 600, fontSize: 30, color: CREAM, opacity: 0.6, letterSpacing: 4, textTransform: 'uppercase'}}>{site.name} · {site.tag}</div>
+      <div style={{position: 'absolute', top: 1450, left: 0, right: 0, textAlign: 'center', fontFamily: mono, fontWeight: 500, fontSize: 30, color: CREAM, opacity: 0.7, letterSpacing: 4, textTransform: 'uppercase'}}>{site.name} · {site.tag}</div>
     </AbsoluteFill>
   );
 };
@@ -181,8 +184,8 @@ const Offer: React.FC = () => {
   const card = (n: string, text: string, delay: number) => {
     const p = spring({frame: frame - delay, fps, config: {damping: 15, stiffness: 150}});
     return (
-      <div key={n} style={{display: 'flex', alignItems: 'center', gap: 36, transform: `translateX(${(1 - p) * 1000}px)`, border: `4px solid ${CREAM}`, borderRadius: 24, padding: '30px 40px'}}>
-        <div style={{fontFamily: headline, fontWeight: 700, fontSize: 120, color: CREAM, lineHeight: 1}}>{n}</div>
+      <div key={n} style={{display: 'flex', alignItems: 'center', gap: 36, transform: `translateX(${(1 - p) * 1000}px)`, border: `4px solid ${CREAM}`, borderRadius: 24, padding: '22px 36px'}}>
+        <div style={{fontFamily: headline, fontWeight: 700, fontSize: 100, color: CREAM, lineHeight: 1}}>{n}</div>
         <div style={{fontFamily: body, fontWeight: 800, fontSize: 52, color: CREAM, lineHeight: 1.15}}>{text}</div>
       </div>
     );
@@ -191,16 +194,16 @@ const Offer: React.FC = () => {
   return (
     <AbsoluteFill style={{background: BLACK}}>
       <Tag />
-      <Tape text="бесплатный дизайн-макет" top={1290} rot={0} size={72} inverted={false} />
+      <Tape text="бесплатный дизайн-макет" top={1580} rot={0} size={64} inverted={false} />
       <div style={{position: 'absolute', top: 230, left: 80, right: 80, transform: `scale(${pulse})`, transformOrigin: 'left top'}}>
         <div style={{display: 'inline-block', background: CREAM, color: BLACK, fontFamily: headline, fontWeight: 700, fontSize: 160, lineHeight: 1, padding: '10px 36px 0', textTransform: 'uppercase', transform: `scaleX(${block})`, transformOrigin: 'left'}}>бесплатно</div>
         <div style={{fontFamily: headline, fontWeight: 700, fontSize: 118, color: CREAM, textTransform: 'uppercase', lineHeight: 1, marginTop: 30, whiteSpace: 'nowrap'}}>дизайн-макет</div>
         <div style={{fontFamily: headline, fontWeight: 700, fontSize: 118, textTransform: 'uppercase', lineHeight: 1, whiteSpace: 'nowrap', ...outline(3)}}>вашего сайта</div>
       </div>
-      <svg style={{position: 'absolute', left: 80, top: 700}} width={920} height={120} viewBox="0 0 920 120">
+      <svg style={{position: 'absolute', left: 80, top: 720}} width={920} height={120} viewBox="0 0 920 120">
         <path d="M0 60 H860 M820 20 L880 60 L820 100" fill="none" stroke={CREAM} strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={1100} strokeDashoffset={1100 * (1 - draw)} />
       </svg>
-      <div style={{position: 'absolute', top: 860, left: 80, right: 80, display: 'flex', flexDirection: 'column', gap: 28}}>
+      <div style={{position: 'absolute', top: 1110, left: 80, right: 80, display: 'flex', flexDirection: 'column', gap: 24}}>
         {card('1', 'Подпишись на @uni___web', 18)}
         {card('2', 'Напиши «+» в комментариях', 34)}
       </div>
@@ -215,13 +218,13 @@ const Outro: React.FC = () => {
   const zoom = 1 + frame * 0.0015;
   return (
     <AbsoluteFill style={{background: BLACK}}>
-      <div style={{position: 'absolute', top: 360, left: 0, right: 0, display: 'flex', justifyContent: 'center', transform: `scale(${zoom})`}}>
-        <Logo color={CREAM} width={760} delay={2} />
+      <div style={{position: 'absolute', top: 200, left: 0, right: 0, display: 'flex', justifyContent: 'center', transform: `scale(${zoom})`}}>
+        <Logo color={CREAM} width={620} delay={2} />
       </div>
-      <div style={{position: 'absolute', top: 930, left: 0, right: 0, textAlign: 'center', color: CREAM, opacity: p, transform: `translateY(${(1 - p) * 40}px)`}}>
+      <div style={{position: 'absolute', top: 1130, left: 0, right: 0, textAlign: 'center', color: CREAM, opacity: p, transform: `translateY(${(1 - p) * 40}px)`}}>
         <div style={{fontFamily: headline, fontWeight: 700, fontSize: 130, textTransform: 'uppercase', whiteSpace: 'nowrap'}}>Ваша идея.</div>
         <div style={{fontFamily: headline, fontWeight: 700, fontSize: 130, textTransform: 'uppercase', whiteSpace: 'nowrap', ...outline(3)}}>Наш код.</div>
-        <div style={{fontFamily: body, fontSize: 52, fontWeight: 800, marginTop: 28, opacity: 0.85}}>@uni___web</div>
+        <div style={{fontFamily: mono, fontSize: 50, fontWeight: 500, marginTop: 30, letterSpacing: 2}}>@uni___web</div>
       </div>
     </AbsoluteFill>
   );
@@ -248,6 +251,6 @@ export const Promo: React.FC = () => (
     {[90, 155, 220, 285, 510].map((b) => (
       <Sequence key={b} from={b - 7} durationInFrames={14}><Wipe /></Sequence>
     ))}
-    <Subtitles phrases={PHRASES} mono />
+    <WordSubtitles phrases={PHRASES} />
   </AbsoluteFill>
 );
