@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "elevenlabs-remotion": {
+      "source": "maartenlouis/elevenlabs-remotion-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "9637b8739c9a3d4655293818906f907e4e69e89c716f1d9f1aceb8377aeb2247"
+    },
     "viral-hooks": {
       "source": "vyralcontent/content-skills",
       "sourceType": "github",
