@@ -114,15 +114,18 @@ const Hook: React.FC = () => {
   );
 };
 
-export type Site = {img: string; name: string; tag: string; scroll: number; chips: [string, string]};
+export type Site = {img: string; desk: string; name: string; tag: string; scroll: number; chips: [string, string]};
 export const SITES: Site[] = [
-  {img: 'shots/archa.jpg', name: 'АРЧА', tag: 'Стрижка растений', scroll: 1100, chips: ['Тёмный премиум', 'Заявка в WhatsApp']},
-  {img: 'shots/toefl.jpg', name: 'TOEFL', tag: 'Языковой центр', scroll: 1100, chips: ['Тест уровня', 'Запись в WhatsApp']},
-  {img: 'shots/tirazh.jpg', name: 'TIRAZH', tag: 'Полиграфия и мерч', scroll: 1100, chips: ['Каталог работ', 'Расчёт тиража']},
+  {img: 'shots/archa.jpg', desk: 'shots/desk-archa.jpg', name: 'АРЧА', tag: 'Стрижка растений', scroll: 900, chips: ['Тёмный премиум', 'Заявка в WhatsApp']},
+  {img: 'shots/toefl.jpg', desk: 'shots/desk-toefl.jpg', name: 'TOEFL', tag: 'Языковой центр', scroll: 900, chips: ['Тест уровня', 'Запись в WhatsApp']},
+  {img: 'shots/tirazh.jpg', desk: 'shots/desk-tirazh.jpg', name: 'TIRAZH', tag: 'Полиграфия и мерч', scroll: 900, chips: ['Каталог работ', 'Расчёт тиража']},
 ];
 
-export const PHONE_W = 600;
-export const PHONE_H = 1190;
+export const PHONE_W = 330;
+export const PHONE_H = 690;
+const DESK_W = 960;
+const DESK_H = 640;
+const BAR = 54;
 
 export const Chip: React.FC<{text: string; delay: number; left?: number; right?: number; top: number}> = ({text, delay, left, right, top}) => {
   const frame = useCurrentFrame();
@@ -140,38 +143,61 @@ export const Showcase: React.FC<{site: Site; idx: number; dur: number}> = ({site
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const inP = spring({frame, fps, config: {damping: 16, stiffness: 110}});
-  const scroll = interpolate(frame, [6, dur - 4], [0, site.scroll], {...clamp, easing: Easing.inOut(Easing.quad)});
+  const phoneP = spring({frame: frame - 10, fps, config: {damping: 14, stiffness: 120}});
+  const t = interpolate(frame, [6, dur - 4], [0, 1], {...clamp, easing: Easing.inOut(Easing.quad)});
   const dirSign = idx % 2 ? -1 : 1;
-  const rotY = (1 - inP) * 55 * dirSign + Math.sin(frame / 20) * 3 * dirSign;
-  const rotX = (1 - inP) * 14;
-  const scale = 0.7 + inP * 0.3 + frame * 0.0012;
   const bgX = interpolate(frame, [0, dur], [dirSign * 40, dirSign * -260]);
+  const deskScale = (DESK_W - 16) / 1440;
   return (
     <AbsoluteFill style={{background: BLACK}}>
       <Tag />
       <div style={{position: 'absolute', top: 120, right: 80, fontFamily: mono, fontWeight: 500, fontSize: 36, letterSpacing: 6, color: CREAM}}>0{idx + 1} / 03</div>
-      <div style={{position: 'absolute', top: 600, left: 0, fontFamily: headline, fontWeight: 700, fontSize: 520, lineHeight: 1, whiteSpace: 'nowrap', textTransform: 'uppercase', transform: `translateX(${bgX}px)`, opacity: 0.55, ...outline(3)}}>
+      <div style={{position: 'absolute', top: 700, left: 0, fontFamily: headline, fontWeight: 700, fontSize: 520, lineHeight: 1, whiteSpace: 'nowrap', textTransform: 'uppercase', transform: `translateX(${bgX}px)`, opacity: 0.45, ...outline(3)}}>
         {site.name}
       </div>
-      <div style={{position: 'absolute', left: (1080 - PHONE_W) / 2, top: 250, width: PHONE_W, height: PHONE_H, perspective: 1800}}>
+      {/* десктопная версия в окне браузера */}
+      <div style={{position: 'absolute', left: (1080 - DESK_W) / 2, top: 250, width: DESK_W, height: DESK_H, perspective: 2200}}>
         <div
           style={{
             width: '100%',
             height: '100%',
-            borderRadius: 78,
+            border: `6px solid ${CREAM}`,
+            borderRadius: 26,
             background: '#0b0c10',
-            border: `8px solid ${CREAM}`,
             overflow: 'hidden',
-            boxShadow: `0 0 0 2px ${BLACK}, 0 60px 120px rgba(237,235,230,0.12)`,
-            transform: `rotateY(${rotY}deg) rotateX(${rotX}deg) scale(${scale})`,
+            transform: `rotateX(${(1 - inP) * 28}deg) translateY(${(1 - inP) * -300}px) scale(${0.85 + inP * 0.15 + frame * 0.0008})`,
+            opacity: Math.min(1, inP * 2),
           }}
         >
-          <Img src={staticFile(site.img)} style={{width: PHONE_W - 16, position: 'absolute', left: 0, top: -scroll}} />
+          <div style={{height: BAR, borderBottom: `4px solid ${CREAM}`, display: 'flex', alignItems: 'center', gap: 12, padding: '0 22px', background: BLACK}}>
+            {[0, 1, 2].map((i) => <div key={i} style={{width: 14, height: 14, borderRadius: 7, background: CREAM}} />)}
+            <div style={{marginLeft: 20, flex: 1, height: 26, borderRadius: 13, border: `2px solid ${CREAM}`, opacity: 0.55}} />
+          </div>
+          <div style={{position: 'relative', height: DESK_H - BAR - 12, overflow: 'hidden'}}>
+            <Img src={staticFile(site.desk)} style={{width: DESK_W - 16, position: 'absolute', left: 0, top: -t * site.scroll * 0.8}} />
+          </div>
         </div>
       </div>
-      <Chip text={site.chips[0]} delay={16} left={30} top={560} />
-      <Chip text={site.chips[1]} delay={26} right={30} top={1180} />
-      <div style={{position: 'absolute', top: 1450, left: 0, right: 0, textAlign: 'center', fontFamily: mono, fontWeight: 500, fontSize: 30, color: CREAM, opacity: 0.7, letterSpacing: 4, textTransform: 'uppercase'}}>{site.name} · {site.tag}</div>
+      {/* мобильная версия поверх */}
+      <div style={{position: 'absolute', left: 660, top: 760, width: PHONE_W, height: PHONE_H, perspective: 1600}}>
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            borderRadius: 54,
+            background: '#0b0c10',
+            border: `7px solid ${CREAM}`,
+            overflow: 'hidden',
+            boxShadow: `0 0 0 6px ${BLACK}, 0 40px 80px rgba(237,235,230,0.12)`,
+            transform: `translateY(${(1 - phoneP) * 700}px) rotateY(${(1 - phoneP) * -40}deg) rotate(${(1 - phoneP) * 8}deg)`,
+          }}
+        >
+          <Img src={staticFile(site.img)} style={{width: PHONE_W - 14, position: 'absolute', left: 0, top: -t * site.scroll * 0.55}} />
+        </div>
+      </div>
+      <Chip text={site.chips[0]} delay={18} left={50} top={1130} />
+      <Chip text={site.chips[1]} delay={28} left={50} top={1250} />
+      <div style={{position: 'absolute', top: 1560, left: 50, width: 580, fontFamily: mono, fontWeight: 500, fontSize: 30, color: CREAM, opacity: 0.7, letterSpacing: 4, textTransform: 'uppercase'}}>{site.name} · ПК + МОБИЛЬНАЯ</div>
     </AbsoluteFill>
   );
 };
